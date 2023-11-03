@@ -16,7 +16,7 @@ fn main() {
     // Should fail since `A` exists more than once
     let input = "AABC";
     let result_1 = parse(input);
-    assert_eq!(result_1, Ok(("", input)));
+    assert_eq!(result_1, Ok(("ABC", "A")));
 }
 
 /// Takes a string input and checks that it only contains one instance of each character contained in a vector
@@ -27,10 +27,12 @@ pub fn parse(input: &str) -> IResult<&str, &str> {
         alt((tag("A"), tag("B"), tag("C"))),
         |s: &str| {
             println!("Checking character {}", s);
-            if let Some(index) = allowed_once.lock().unwrap().iter().position(|x| *x == s) {
-                // FIXME: Is it getting stuck here waiting to get a lock?
+            let data = allowed_once.clone();
+            let mut value = data.lock().unwrap();
+
+            if let Some(index) = value.iter().position(|x| *x == s) {
                 println!("Found result at index {}, attempting to remove", index);
-                allowed_once.lock().unwrap().swap_remove(index);
+                value.swap_remove(index);
                 println!("Removed!");
                 return true;
             } else {
